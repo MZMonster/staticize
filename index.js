@@ -73,15 +73,26 @@ Staticize.prototype._getCacheTTL = function (url) {
 Staticize.prototype.cacheMiddleware = function (req, res, next) {
   var cacheKey = req.method.toLowerCase() + ' ' + req.originalUrl;
   // debug
-  if (this.debug) {
-    console.log('get %s from cache', req.originalUrl)
-  }
+  var isDebug = this.debug;
   // get from cache
   this.cache.get(cacheKey)
     .then(function (data) {
       if (data) {
-        return res.send(data);
+        console.log('get %s from cache', req.originalUrl);
+        // send res
+        res.statusCode = data.status;
+        res.set(data.headers);
+
+        return res.send(data.body);
       } else {
+        // replace res.send, res.view
+        res.realSend = res.send;
+        res.realView = res.view;
+        // new res.send
+        res.send = function () {
+
+        };
+
         return next();
       }
     })
