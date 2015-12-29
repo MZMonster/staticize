@@ -1,0 +1,39 @@
+{
+  "name": "staticize",
+  "version": "0.0.1",
+  "description": "static middleware for express koa ...",
+  "author": "zzxun <xtkml.g@gmail.com>",
+  "contributors": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MZMonster/staticize.git"
+  },
+  "keywords": [
+    "render",
+    "middleware",
+    "cache"
+  ],
+  "dependencies": {
+    "lodash": "^3.10.1"
+  },
+  "devDependencies": {
+    "express": "^4.13.3",
+    "istanbul": "^0.4.1",
+    "koa": "^1.1.2",
+    "mocha": "^2.3.4",
+    "should": "^8.0.2",
+    "supertest": "^1.1.0"
+  },
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MZMonster/staticize/issues"
+  },
+  "homepage": "https://github.com/MZMonster/staticize#readme",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
