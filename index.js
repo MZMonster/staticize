@@ -23,30 +23,23 @@ module.exports = Staticize;
  *
  * @param {Object} options:
  *   1. `options.cache` - such as {adapter: 'redis', config: {host: 'localhost', port: '6379', database: 2}}
- *   2. `options.routes` - such as `{'get /index': 60, 'get /post': 120 }` (cache for seconds)
+ *   2. `[options.routes]` - such as `{'get /index': 60, 'get /post': 120 }` (cache for seconds)
  *   3. `options.debug` - print debug info
  * @public
  */
 function Staticize(options) {
   // default to `{}`
   var opts = Object.create(options || null);
-  if (_.isEmpty(opts)) {
-    throw new TypeError('options required');
-  }
   // a cache
-  this.cache = Cacher(opts.cache);
+  this._cache = Cacher(opts.cache);
 
   // route options
-  var routes = options.routes;
-  if (!routes || !_.isObject(routes) || _.isEmpty(routes)) {
-    throw new TypeError('options.routes required');
-  }
-  this.routes = routes;
+  this._routes = opts.routes || {};
 
-  this.debug = options.debug || false;
+  this._debug = opts.debug || false;
 
   // debug info
-  if (this.debug) {
+  if (this._debug) {
     console.log('Staticize initial');
   }
 }
@@ -54,52 +47,99 @@ function Staticize(options) {
 /**
  * get cache ttl
  * @param url
+ * @param ttl
  * @private
  */
-Staticize.prototype._getCacheTTL = function (url) {
-  if (this.routes[url]) {
-    return this.routes[url];
+Staticize.prototype._getCacheTTL = function (url, ttl) {
+  if (ttl) {
+    return ttl;
   }
-  for (var key in this.routes) {
+  // get ttl from routes opts
+  if (this._routes[url]) {
+    return this._routes[url];
+  }
+  for (var key in this._routes) {
     if (url.indexOf(key) > -1) {
-      return this.routes[key];
+      return this._routes[key];
     }
   }
   return 0;
 };
 /**
  * return cache file or render or api res result if exist
+ * @param {Number} [ttl=1] default 1 second
  */
-Staticize.prototype.cacheMiddleware = function (req, res, next) {
-  var cacheKey = req.method.toLowerCase() + ' ' + req.originalUrl;
+Staticize.prototype.cacheMiddleware = function (ttl) {
+  // back this
+  var that = this;
+  // check ttl
+  if (!ttl || !_.isNumber(ttl)) {
+    ttl = 0;
+  }
   // debug
-  var isDebug = this.debug;
-  // get from cache
-  this.cache.get(cacheKey)
-    .then(function (data) {
-      if (data) {
-        console.log('get %s from cache', req.originalUrl);
-        // send res
-        res.statusCode = data.status;
-        res.set(data.headers);
+  if (this._debug) {
+    console.log('set ttl:', ttl)
+  }
 
-        return res.send(data.body);
-      } else {
-        // replace res.send, res.view
-        res.realSend = res.send;
-        res.realView = res.view;
-        // new res.send
-        res.send = function () {
+  // middleware function
+  return function (req, res, next) {
+    // this -> that
+    // cacheKey from req
+    var cacheKey = req.method.toLowerCase() + ' ' + req.originalUrl;
+    // get from cache
+    ttl = that._getCacheTTL(req.originalUrl, ttl);
+    if (ttl) {
+      that._cache.get(cacheKey)
+        .then(function (data) {
+          // found a cache
+          if (data) {
+            if (that._debug) {
+              console.log('get %s from cache', req.originalUrl);
+            }
+            // send res
+            res.set(data.headers);
 
-        };
+            return res.status(data.status).send(data.body);
+          } else {
+            // replace res.end
+            res.realEnd = res.end;
+            // new res.send
+            res.end = function (/* [data][, encoding][, callback] */) {
+              var body     = arguments[0]
+                , encoding = arguments[1]
+                , callback = arguments[2]
+                , data;
+              // will set to cache
+              if (body) {
+                data = {
+                  body    : body,
+                  encoding: encoding,
+                  status  : this.statusCode,
+                  headers : this._headers
+                };
 
-        return next();
-      }
-    })
-    .catch(function (err) {
-      console.error(err);
+                if (that._debug) {
+                  console.log('set %s to cache %ds', req.originalUrl, ttl);
+                }
+                // set
+                that._cache.set(cacheKey, data, ttl);
+              }
+              // real end
+              this.realEnd(body, encoding, callback);
+            };
+
+            // return next
+            return next();
+          }
+        })
+        .catch(function (err) {
+          console.error(err);
+          return next();
+        });
+    } else {
       return next();
-    });
+    }
+  };
 };
 
 /**
@@ -110,11 +150,4 @@ Staticize.prototype.cacheMiddleware = function (req, res, next) {
 Staticize.prototype.cacheFile = function (root, options) {
 
 };
-/**
- *
- * @param routeOpts
- * @private
- */
-function _parserRoute(routeOpts) {
 
-}
