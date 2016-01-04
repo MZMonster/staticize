@@ -92,12 +92,12 @@ Staticize.prototype._getCacheTTL = function (method, originalUrl, ttl) {
   // use method + originalUrl
   for (var key in this._routes.method) {
     if (tmp.indexOf(key) > -1) {
-      return this._routes[tmp];
+      return this._routes.method[key];
     }
   }
   for (var key in this._routes.all) {
     if (originalUrl.indexOf(key) > -1) {
-      return this._routes[tmp];
+      return this._routes.all[key];
     }
   }
   return 0;
@@ -110,30 +110,29 @@ Staticize.prototype._getCacheTTL = function (method, originalUrl, ttl) {
  * @private
  */
 Staticize.prototype._hash = function (req) {
-
-  if (req.method !== 'GET' || req.method !== 'HEAD') {
+  // get|head
+  if (!(req.method === 'GET' || req.method === 'HEAD')) {
     // create hash
     var hash = crypto.createHash('sha1');
-    hash.update(_.cloneDeep(req.body) || {}, 'utf-8');
+    hash.update(JSON.stringify(_.cloneDeep(req.body || {})), 'utf-8');
     // to base64
     return hash.digest().toString('base64').toLowerCase();
   }
-  // get|head
   return '';
 };
 
 /**
  * return cache file or render or api res result if exist
- * @param {Number} [ttl=0] default 0 second, use the `options.routes` to get ttl
+ * @param {Number} [cacheTTL=0] default 0 second, use the `options.routes` to get ttl
  * @param {Function} [fn=hash(req.body)] use `req` to create a extension string adding to cache key
  *   if method !== get|head
  */
-Staticize.prototype.cacheMiddleware = function (ttl, fn) {
+Staticize.prototype.cacheMiddleware = function (cacheTTL, fn) {
   // back this
   var that = this;
   // check ttl
-  if (!ttl || !_.isNumber(ttl)) {
-    ttl = 0;
+  if (!cacheTTL || !_.isNumber(cacheTTL)) {
+    cacheTTL = 0;
   }
   // set fn
   if (!fn || (typeof fn !== 'function')) {
@@ -148,14 +147,14 @@ Staticize.prototype.cacheMiddleware = function (ttl, fn) {
     var cacheKey = method + ' ' + req.originalUrl;
     cacheKey += fn(req);
     // get from cache
-    ttl = that._getCacheTTL(method, req.originalUrl, ttl);
+    var ttl = that._getCacheTTL(method, req.originalUrl, cacheTTL);
     if (ttl) {
       that._cache.get(cacheKey)
         .then(function (data) {
           // found a cache
           if (data) {
             if (that._debug) {
-              console.log('get %s - %s from cache', method, req.originalUrl);
+              console.log('get %s - %s from cache', method, cacheKey);
             }
             // send res
             res.set(data.headers);
@@ -179,7 +178,7 @@ Staticize.prototype.cacheMiddleware = function (ttl, fn) {
                 };
 
                 if (that._debug) {
-                  console.log('set %s - %s to cache %ds', method, req.originalUrl, ttl);
+                  console.log('set %s - %s to cache %ds', method, cacheKey, ttl);
                 }
                 // set
                 that._cache.set(cacheKey, data, ttl);
