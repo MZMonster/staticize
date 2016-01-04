@@ -4,17 +4,17 @@ html page static for node
 
 SUPPORTS:
 
-- [expressjs](#https://github.com/strongloop/express)
+- [expressjs](https://github.com/strongloop/express)
 
 
-- [sailsjs](#https://github.com/balderdashy/sails)
+- [sailsjs](https://github.com/balderdashy/sails)
 
 USE:
 
-- [memory](#https://github.com/ptarjan/node-cache)
+- [memory](https://github.com/ptarjan/node-cache)
 
 
-- [redis](#https://github.com/NodeRedis/node_redis)
+- [redis](https://github.com/NodeRedis/node_redis)
 
 
 
