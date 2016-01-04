@@ -11,10 +11,14 @@ var Staticize = require('./index');
 
 var app = express();
 var staticize = new Staticize({
-  cache: {
+  cache : {
     adapter: 'memory'
   },
-  debug: true
+  debug : true,
+  routes: {
+    '/cache120s'  : 120,
+    'get /cache90': 90
+  }
 });
 
 app.use('/cache30s', staticize.cacheMiddleware(30));
