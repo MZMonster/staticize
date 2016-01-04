@@ -53,7 +53,7 @@ Staticize.prototype._parseRoutes = function (options) {
   var opts = {method: {}, all: {}};
   var tmp;
   for (var key in options) {
-    if (_.isNumber(+options[key])) {
+    if (_.isNumber(options[key])) {
       tmp = key.split(' ');
       if (tmp.length === 1) {
         // debug
