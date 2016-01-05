@@ -14,9 +14,12 @@ USE:
 - [memory](https://github.com/ptarjan/node-cache)
 
 
-- [redis](https://github.com/NodeRedis/node_redis)
+- [redis](https://github.com/NodeRedis/node_redis) (coming soon)
 
+Cache:
 
+- api result
+- api view/render
 
 # Example
 
@@ -30,17 +33,21 @@ And set it (use memory or redis or others):
 
 ``` javascript
 var staticize = new Staticize({
-  cache: {
+  cache : {
     adapter: 'memory'
   },
-  debug: true
+  debug : true, // will log the debug info
+  routes: {
+    '/cache2s'    : 2,
+    'get /cache3s': 3
+  }
 });
 ```
 
 Then you can create a middleware:
 
 ``` javascript
-staticize.cacheMiddleware(30) // set cache seconds
+staticize.cacheMiddleware() // set cache seconds, default 0 to use routes config
 ```
 
 Use it:
@@ -48,9 +55,8 @@ Use it:
 - expressjs:
 
 ``` javascript
-app.use('/cache30s', staticize.cacheMiddleware(30));
-app.use('/cache60s', staticize.cacheMiddleware(60));
-app.use('/cache0s', staticize.cacheMiddleware());
+app.use(staticize.cacheMiddleware());
+app.use('/cache4s', staticize.cacheMiddleware(4));
 
 app.get('/*', function (req, res) {
   res.json({
@@ -79,9 +85,60 @@ module.exports = staticize.cacheMiddleware(30);
 
 
 
-# Staticize
+# new Staticize(options)
+
+#### options.cache
+
+cache config, include:
+
+- `options.cache.adapter` : type `string`, such as `memory` `redis` ...
+- `options.cache.config` : type `object`, if not use `memory` adapter, need to connect to Adapter, for example: 
+
+``` json
+{
+  ...
+  cache: {
+    adapter: 'redis',
+    config: {
+      host: 'localhost',
+  	  port: 6379,
+      database: 2
+	}
+  }
+  ...
+} 
+```
+
+if given an unsupported `adapter` would throw a `TypeError` :
+
+``` javascript
+throw new Error('Unsupported cache adapter: ' + adapter);
+```
 
 
+
+#### [options.debug]
+
+- `true` :  use `option.log` to print debug info
+- `false or undefined` : shutdown debug log
+
+
+
+#### [options.routes]
+
+`object` , `key` is `'uri'` or `'${http method} uri'` , `value` is cache seconds.
+
+1. When `staticize.cacheMiddleware(30)` with a `ttl` , staticize will use this `ttl` and NOT search in `option.routes` .
+2. When `staticize.cacheMiddleware()` with no `ttl` , staticize will search in `option.routes` :
+   1. First search the `'uri' key`, found and return;
+   2. Then search the `'${http method} uri' key`, found and return;
+   3. if not, return 0.
+
+
+
+# Test
+
+Run `npm test` .
 
 
 
