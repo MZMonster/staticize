@@ -94,7 +94,7 @@ cache config, include:
 - `options.cache.adapter` : type `string`, such as `memory` `redis` ...
 - `options.cache.config` : type `object`, if not use `memory` adapter, need to connect to Adapter, for example: 
 
-``` json
+``` javascript
 {
   ...
   cache: {
@@ -119,8 +119,8 @@ throw new Error('Unsupported cache adapter: ' + adapter);
 
 #### [options.debug]
 
-- `true` :  use `option.log` to print debug info
-- `false or undefined` : shutdown debug log
+- `true` :  use `option.log` to print debug log
+- `false` or `undefined` : shutdown debug log
 
 
 
