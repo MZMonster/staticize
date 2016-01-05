@@ -1,7 +1,7 @@
 {
   "name": "staticize",
-  "version": "0.0.1",
-  "description": "static middleware for express koa ...",
+  "version": "0.1.0",
+  "description": "staticize middleware for expressjs sailsjs...",
   "author": "zzxun <xtkml.g@gmail.com>",
   "contributors": [],
   "repository": {
@@ -15,6 +15,7 @@
   ],
   "dependencies": {
     "bluebird": "^3.1.1",
+    "event-stream": "^3.3.2",
     "lodash": "^3.10.1",
     "memory-cache": "^0.1.4"
   },
@@ -36,6 +37,6 @@
   "homepage": "https://github.com/MZMonster/staticize#readme",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test.js"
   }
 }
