@@ -1,6 +1,6 @@
-# staticize
+# node-staticize
 
-html page static for node
+Router staticize for node
 
 SUPPORTS:
 
@@ -92,7 +92,7 @@ module.exports = staticize.cacheMiddleware(30);
 cache config, include:
 
 - `options.cache.adapter` : type `string`, such as `memory` `redis` ...
-- `options.cache.config` : type `object`, if not use `memory` adapter, need to connect to Adapter, for example: 
+- `options.cache.config` : type `object`, if not use `memory` adapter, need to connect to Adapter, for example:
 
 ``` javascript
 {
@@ -106,7 +106,7 @@ cache config, include:
 	}
   }
   ...
-} 
+}
 ```
 
 if given an unsupported `adapter` would throw a `TypeError` :

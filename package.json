@@ -1,8 +1,8 @@
 {
-  "name": "staticize",
+  "name": "node-staticize",
   "version": "0.1.0",
   "description": "staticize middleware for expressjs sailsjs...",
-  "author": "zzxun <xtkml.g@gmail.com>",
+  "author": "MZMonster <bgdev@qq.com>",
   "contributors": [],
   "repository": {
     "type": "git",
