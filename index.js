@@ -124,10 +124,11 @@ Staticize.prototype._hash = function (req) {
 /**
  * return cache file or render or api res result if exist
  * @param {Number} [cacheTTL=0] default 0 second, use the `options.routes` to get ttl
+ * @param {skiper} [regEx] which routes will be skiper
  * @param {Function} [fn=hash(req.body)] use `req` to create a extension string adding to cache key
  *   if method !== get|head
  */
-Staticize.prototype.cacheMiddleware = function (cacheTTL, fn) {
+Staticize.prototype.cacheMiddleware = function (cacheTTL, skiper, fn) {
   // back this
   var that = this;
   // check ttl
@@ -141,10 +142,15 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, fn) {
 
   // middleware function
   return function (req, res, next) {
+    // 跳过某些不需要静态化的地址
+    if (req.originalUrl.match(skiper)) {
+      return next();
+    }
     // method
     var method = req.method.toLowerCase();
+    var origin = req.origin || 'm';
     // cacheKey from req
-    var cacheKey = method + ' ' + req.originalUrl;
+    var cacheKey = method + ':' + req.originalUrl + ':' + origin;  // 请求来源 ,默认为空, 为不同的来源设置 缓存
     cacheKey += fn(req);
     // get from cache
     var ttl = that._getCacheTTL(method, req.originalUrl, cacheTTL);
