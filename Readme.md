@@ -1,6 +1,6 @@
-# staticize
+# node-staticize
 
-html page static for node
+Router staticize for express
 
 SUPPORTS:
 
@@ -14,12 +14,18 @@ USE:
 - [memory](https://github.com/ptarjan/node-cache)
 
 
-- [redis](https://github.com/NodeRedis/node_redis) (coming soon)
+- [redis](https://github.com/NodeRedis/node_redis)
 
 Cache:
 
 - api result
 - api view/render
+
+# Install
+
+``` shell
+npm install node-staticize
+```
 
 # Example
 
@@ -34,9 +40,12 @@ And set it (use memory or redis or others):
 ``` javascript
 var staticize = new Staticize({
   cache : {
-    adapter: 'memory'
+    adapter: 'redis',
+    options: {
+      host: '127.0.0.1',
+      port: '6379'
+    }
   },
-  debug : true, // will log the debug info
   routes: {
     '/cache2s'    : 2,
     'get /cache3s': 3
@@ -47,7 +56,7 @@ var staticize = new Staticize({
 Then you can create a middleware:
 
 ``` javascript
-staticize.cacheMiddleware() // set cache seconds, default 0 to use routes config
+staticize.cacheMiddleware() // set cache seconds, default 0 to skip
 ```
 
 Use it:
@@ -92,7 +101,7 @@ module.exports = staticize.cacheMiddleware(30);
 cache config, include:
 
 - `options.cache.adapter` : type `string`, such as `memory` `redis` ...
-- `options.cache.config` : type `object`, if not use `memory` adapter, need to connect to Adapter, for example: 
+- `options.cache.options` : type `object`, if not use `memory` adapter, need to connect to Adapter, for example:
 
 ``` javascript
 {
@@ -101,12 +110,11 @@ cache config, include:
     adapter: 'redis',
     config: {
       host: 'localhost',
-  	  port: 6379,
-      database: 2
+  	  port: 6379
 	}
   }
   ...
-} 
+}
 ```
 
 if given an unsupported `adapter` would throw a `TypeError` :
@@ -114,14 +122,6 @@ if given an unsupported `adapter` would throw a `TypeError` :
 ``` javascript
 throw new Error('Unsupported cache adapter: ' + adapter);
 ```
-
-
-
-#### [options.debug]
-
-- `true` :  use `option.log` to print debug log
-- `false` or `undefined` : shutdown debug log
-
 
 
 #### [options.routes]
@@ -134,6 +134,13 @@ throw new Error('Unsupported cache adapter: ' + adapter);
    2. Then search the `'${http method} uri' key`, found and return;
    3. if not, return 0.
 
+# API
+
+## `.cacheMiddleware(cacheTTL, skip, fn)`
+
+1. `cacheTTL` is cache seconds.
+2. `[skip]` is a RegExp, if `req.originalUrl.match(skip)`, goto `next()`.
+3. `fn` is a function of using `req` to create a extension string adding to cache key.
 
 
 # Test
@@ -141,6 +148,9 @@ throw new Error('Unsupported cache adapter: ' + adapter);
 Run `npm test` .
 
 
+# Debug
+
+Using [debug](https://github.com/visionmedia/debug).
 
 # LICENSE
 

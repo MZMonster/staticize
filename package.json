@@ -1,8 +1,8 @@
 {
-  "name": "staticize",
-  "version": "0.1.0",
+  "name": "node-staticize",
+  "version": "0.2.0",
   "description": "staticize middleware for expressjs sailsjs...",
-  "author": "zzxun <xtkml.g@gmail.com>",
+  "author": "MZMonster <bgdev@qq.com>",
   "contributors": [],
   "repository": {
     "type": "git",
@@ -15,6 +15,7 @@
   ],
   "dependencies": {
     "bluebird": "^3.1.1",
+    "debug": "^2.2.0",
     "event-stream": "^3.3.2",
     "lodash": "^3.10.1",
     "memory-cache": "^0.1.4"
@@ -24,6 +25,7 @@
     "istanbul": "^0.4.1",
     "koa": "^1.1.2",
     "mocha": "^2.3.4",
+    "redis": "^2.5.3",
     "should": "^8.0.2",
     "supertest": "^1.1.0"
   },
