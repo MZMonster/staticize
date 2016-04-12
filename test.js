@@ -34,7 +34,7 @@ describe('Test memory cache', function () {
     });
     // routes
     app.use(staticize.cacheMiddleware());
-    app.use('/cache4s', staticize.cacheMiddleware(4));
+    app.use('/cache4s', staticize.cacheMiddleware(4, /login/));
 
     app.get('/*', function (req, res) {
       res.json({
@@ -211,6 +211,19 @@ describe('Test memory cache', function () {
             done();
           });
       }, 4000);
+    });
+  });
+
+  describe('#skiper login for [GET]', function () {
+    // request first time
+    it('should get a time', function (done) {
+      reqApp
+        .get('/login')
+        .expect(200)
+        .end(function (err, result) {
+          should.not.exist(err);
+          done();
+        });
     });
   });
 });
