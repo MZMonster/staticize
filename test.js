@@ -24,9 +24,8 @@ describe('Test memory cache', function () {
     // staticize config
     var staticize = new Staticize({
       cache : {
-        adapter: 'memory'
+        adapter: 'redis'
       },
-      debug : true,
       routes: {
         '/cache2s'    : 2,
         'get /cache3s': 3
@@ -187,6 +186,20 @@ describe('Test memory cache', function () {
           done();
         });
     });
+    // url -> login
+    it('login should skip', function (done) {
+      this.timeout(3000);
+      setTimeout(function () {
+        reqApp
+          .get('/cache4s/login')
+          .expect(200)
+          .end(function (err, result) {
+            should.not.exist(err);
+            result.body.should.not.be.eql(tmp);
+            done();
+          });
+      }, 2000);
+    });
     // second time
     it('should be equal to last one', function (done) {
       reqApp
@@ -214,7 +227,7 @@ describe('Test memory cache', function () {
     });
   });
 
-  describe('#skiper login for [GET]', function () {
+  describe('#skip login for [GET]', function () {
     // request first time
     it('should get a time', function (done) {
       reqApp
