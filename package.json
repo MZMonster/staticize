@@ -19,6 +19,7 @@
     "event-stream": "^3.3.2",
     "lodash": "^3.10.1",
     "memory-cache": "^0.1.4",
+    "path-to-regexp": "^1.7.0",
     "redis": "^2.5.3"
   },
   "devDependencies": {
