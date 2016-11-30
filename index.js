@@ -14,7 +14,8 @@ var debug = require('debug')('staticize');
 var _       = require('lodash'),
     crypto  = require('crypto'),
     Cacher  = require('./lib/cacher'),
-    resolve = require('path').resolve;
+    resolve = require('path').resolve,
+    pathToRegexp = require('path-to-regexp');
 
 /**
  * Module exports
@@ -41,34 +42,48 @@ function Staticize(options) {
 }
 
 /**
- * divide `'method + url': ${ttl}` and `'url': ${ttl}`
- * @param options
- * @returns {*}
+ * parse route path to regular expression
+ * @param routes
+ * @returns {Object} routesMap
+ *   {
+ *     get: [
+ *       {
+ *         path: '/foo/:bar',
+ *         pattern: '/^\/foo\/((?:[^\/]+?))(?:\/(?=$))?$/i',
+ *         ttl: 30
+ *       }
+ *     ],
+ *     post: [...]
+ *   }
  * @private
  */
-Staticize.prototype._parseRoutes = function (options) {
-  var opts = {method: {}, all: {}};
-  var tmp;
-  for (var key in options) {
-    if (_.isNumber(options[key])) {
-      tmp = key.split(' ');
-      if (tmp.length === 1) {
-        // debug
-        debug('set ttl %s: %d', key, +options[key]);
+Staticize.prototype._parseRoutes = function (routes) {
+  var routesMap = {};
 
-        opts.all[key] = +options[key];
-      } else if (tmp.length >= 2) {
-        // debug
-        debug('set ttl %s: %d', tmp[0].toLowerCase() + ' ' + tmp[1], +options[key]);
-
-        opts.method[tmp[0].toLowerCase() + ' ' + tmp[1]] = +options[key];
+  for (var routePath in routes) {
+    var ttl = +routes[routePath];
+    if (_.isNumber(ttl)) {
+      var method = 'get';
+      var tmp = routePath.split(' ');
+      if (tmp.length >= 2) {
+        method = tmp[0].toLowerCase();
+        routePath = tmp[1];
       }
+
+      debug('set ttl %s: %d', method + ' ' + routePath, ttl);
+
+      routesMap[method] = routesMap[method] || [];
+      routesMap[method].push({
+        path: routePath,
+        pattern: pathToRegexp(routePath), // path to regular expression
+        ttl: ttl
+      });
     } else {
       throw new TypeError('ttl must be a number');
     }
   }
 
-  return opts;
+  return routesMap;
 };
 
 /**
@@ -82,19 +97,16 @@ Staticize.prototype._getCacheTTL = function (method, originalUrl, ttl) {
   if (ttl) {
     return ttl;
   }
-  var tmp = method + ' ' + originalUrl;
-  // get ttl from routes opts
-  // use method + originalUrl
-  for (var key in this._routes.method) {
-    if (tmp.indexOf(key) > -1) {
-      return this._routes.method[key];
+
+  var routes = this._routes[method] || [];
+  for (var index in routes) {
+    var route = routes[index];
+    if (route.pattern.test(originalUrl)) {
+      console.log('match cache route: %s', route.path);
+      return route.ttl;
     }
   }
-  for (var key in this._routes.all) {
-    if (originalUrl.indexOf(key) > -1) {
-      return this._routes.all[key];
-    }
-  }
+
   return 0;
 };
 

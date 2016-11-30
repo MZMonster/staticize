@@ -47,8 +47,10 @@ var staticize = new Staticize({
     }
   },
   routes: {
-    '/cache2s'    : 2,
-    'get /cache3s': 3
+    '/cache2s'    : 2,  // default GET method
+    'get /cache3s': 3,
+    'post /cache3s': 3,
+    'get /foo/:bar': 5, // match /foo/whatever
   }
 });
 ```
