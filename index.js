@@ -102,7 +102,7 @@ Staticize.prototype._getCacheTTL = function (method, originalUrl, ttl) {
   for (var index in routes) {
     var route = routes[index];
     if (route.pattern.test(originalUrl)) {
-      console.log('match cache route: %s', route.path);
+      debug('match cache route: %s', route.path);
       return route.ttl;
     }
   }
