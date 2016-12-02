@@ -15,7 +15,8 @@ var _       = require('lodash'),
     crypto  = require('crypto'),
     Cacher  = require('./lib/cacher'),
     resolve = require('path').resolve,
-    pathToRegexp = require('path-to-regexp');
+    pathToRegexp = require('path-to-regexp'),
+    fresh = require('fresh');
 
 /**
  * Module exports
@@ -179,6 +180,10 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
             res.realEnd = res.end;
 
             // Avoid checking Last-Modified and ETag on the first request
+            res._reqHeaders = { // cache req.headers
+              'if-none-match': req.headers['if-none-match'],
+              'if-modified-since': req.headers['if-modified-since'],
+            };
             delete req.headers['if-none-match'];
             delete req.headers['if-modified-since'];
 
@@ -187,6 +192,7 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
               var body     = arguments[0],
                   encoding = arguments[1],
                   callback = arguments[2],
+                  s = this.statusCode,
                   data;
               // will set to cache
               if (body) {
@@ -201,6 +207,17 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
                 // set
                 self._cache.set(cacheKey, data, ttl);
               }
+
+              // If non-modify, set statusCode = 304
+              if (((s >= 200 && s < 300) || 304 == s)
+                  && fresh(this._reqHeaders, this._headers)) {
+                this.statusCode = 304;
+                this.removeHeader('Content-Type');
+                this.removeHeader('Content-Length');
+                this.removeHeader('Transfer-Encoding');
+                body = '';
+              }
+
               // real end
               this.realEnd(body, encoding, callback);
             };

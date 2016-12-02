@@ -17,6 +17,7 @@
     "bluebird": "^3.1.1",
     "debug": "^2.2.0",
     "event-stream": "^3.3.2",
+    "fresh": "^0.3.0",
     "lodash": "^3.10.1",
     "memory-cache": "^0.1.4",
     "path-to-regexp": "^1.7.0",
