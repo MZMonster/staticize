@@ -177,6 +177,11 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
           } else {
             // replace res.end
             res.realEnd = res.end;
+
+            // Avoid checking Last-Modified and ETag on the first request
+            delete req.headers['if-none-match'];
+            delete req.headers['if-modified-since'];
+
             // new res.send
             res.end = function (/* [data][, encoding][, callback] */) {
               var body     = arguments[0],
