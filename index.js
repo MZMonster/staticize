@@ -62,7 +62,19 @@ Staticize.prototype._parseRoutes = function (routes) {
   var routesMap = {};
 
   for (var routePath in routes) {
-    var ttl = +routes[routePath];
+    var routeItem = routes[routePath];
+    var ttl = +routeItem;
+    var cors = null;
+
+    if (_.isObject(routeItem)) {
+      ttl = +routeItem.ttl;
+      if (_.isString(routeItem.cors)) {
+        cors = routeItem.cors;
+      } else {
+        throw new TypeError('cors must be a string object');
+      }
+    }
+
     if (_.isNumber(ttl)) {
       var method = 'get';
       var tmp = routePath.split(' ');
@@ -77,7 +89,8 @@ Staticize.prototype._parseRoutes = function (routes) {
       routesMap[method].push({
         path: routePath,
         pattern: pathToRegexp(routePath), // path to regular expression
-        ttl: ttl
+        ttl: ttl,
+        cors: cors,
       });
     } else {
       throw new TypeError('ttl must be a number');
@@ -94,9 +107,12 @@ Staticize.prototype._parseRoutes = function (routes) {
  * @param {Number} ttl cache seconds
  * @private
  */
-Staticize.prototype._getCacheTTL = function (method, originalUrl, ttl) {
-  if (ttl) {
-    return ttl;
+Staticize.prototype._getCacheConfig = function (method, originalUrl, routeConfig) {
+  if (routeConfig) {
+    if (_.isNumber(routeConfig)) {
+      return { ttl: routeConfig };
+    }
+    return routeConfig;
   }
 
   var routes = this._routes[method] || [];
@@ -104,7 +120,7 @@ Staticize.prototype._getCacheTTL = function (method, originalUrl, ttl) {
     var route = routes[index];
     if (route.pattern.test(originalUrl)) {
       debug('match cache route: %s', route.path);
-      return route.ttl;
+      return route;
     }
   }
 
@@ -136,12 +152,12 @@ Staticize.prototype._hash = function (req) {
  * @param {Function} [fn=hash(req.body)] use `req` to create a extension string adding to cache key
  *   if method !== get|head
  */
-Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
+Staticize.prototype.cacheMiddleware = function (cacheConf, skip, fn) {
   // back this
   var self = this;
   // check ttl
-  if (!cacheTTL || !_.isNumber(cacheTTL)) {
-    cacheTTL = 0;
+  if (!cacheConf) {
+    cacheConf = null;
   }
 
   // set fn
@@ -163,8 +179,8 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
     var cacheKey = method + ':' + req.originalUrl + ':' + origin;  // cache for diff `req.origin`
     cacheKey += fn(req);
     // get from cache
-    var ttl = self._getCacheTTL(method, req.originalUrl, cacheTTL);
-    if (ttl) {
+    var config = self._getCacheConfig(method, req.originalUrl, cacheConf);
+    if (config) {
       self._cache.get(cacheKey)
         .then(function (data) {
           // found a cache
@@ -173,6 +189,15 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
             debug('get %s:%s from cache', method, cacheKey);
             // send res
             res.set(data.headers);
+
+            // set cors headers
+            if (req.headers.origin && config.cors) {
+              if (config.cors === '*' || ~config.cors.indexOf(req.headers.origin)) {
+                res.set('Access-Control-Allow-Credentials', true);
+                res.set('Access-Control-Allow-Origin', req.headers.origin);
+              }
+            }
+
             // send to client
             return res.status(data.status).send(new Buffer(data.body));
           } else {
@@ -202,10 +227,10 @@ Staticize.prototype.cacheMiddleware = function (cacheTTL, skip, fn) {
                   headers: this._headers
                 };
 
-                debug('set %s:%s to cache %ds', method, cacheKey, ttl);
+                debug('set %s:%s to cache %ds', method, cacheKey, config.ttl);
 
                 // set
-                self._cache.set(cacheKey, data, ttl);
+                self._cache.set(cacheKey, data, config.ttl);
               }
 
               // If non-modify, set statusCode = 304
