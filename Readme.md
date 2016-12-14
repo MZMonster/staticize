@@ -51,6 +51,14 @@ var staticize = new Staticize({
     'get /cache3s': 3,
     'post /cache3s': 3,
     'get /foo/:bar': 5, // match /foo/whatever
+    '/cacheCors': {
+      ttl: 3,
+      cors: 'http://yoursite.com' // allow 'http://yoursite.com' CORS access
+    },
+    '/cacheCorsForAll': {
+      ttl: 3,
+      cors: '*' // "*" to allow all domains CORS access
+    }
   }
 });
 ```
@@ -68,6 +76,7 @@ Use it:
 ``` javascript
 app.use(staticize.cacheMiddleware());
 app.use('/cache4s', staticize.cacheMiddleware(4));
+app.use('/cacheCors', staticize.cacheMiddleware({ ttl: 3, cors: '*' }));
 
 app.get('/*', function (req, res) {
   res.json({
