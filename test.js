@@ -28,7 +28,11 @@ describe('Test memory cache', function () {
       },
       routes: {
         '/cache2s'    : 2,
-        'get /cache3s': 3
+        'get /cache3s': 3,
+        '/cacheCors': {
+          ttl: 2,
+          cors: 'http://google.com' // set cors='*' for accept all origin
+        }
       }
     });
     // routes
@@ -237,6 +241,63 @@ describe('Test memory cache', function () {
           should.not.exist(err);
           done();
         });
+    });
+  });
+
+  describe('#cors', function () {
+    var tmp;
+
+    it('should support cors request', function (done) {
+      reqApp
+        .get('/cacheCors')
+        .set('Origin', 'http://google.com')
+        .expect(200)
+        .end(function (err, result) {
+          should.not.exist(err);
+          tmp = result.body;
+          done();
+        });
+    });
+
+    it('should return with cors headers', function (done) {
+      reqApp
+        .get('/cacheCors')
+        .set('Origin', 'http://google.com')
+        .expect('Access-Control-Allow-Credentials', /true/)
+        .expect('Access-Control-Allow-Origin', /http:\/\/google.com/)
+        .expect(200)
+        .end(function (err, result) {
+          should.not.exist(err);
+          result.body.should.be.eql(tmp);
+          done();
+        });
+    });
+
+    it('should not return with cors headers', function (done) {
+      reqApp
+        .get('/cacheCors')
+        .set('Origin', 'http://baidu.com')
+        .expect('Access-Control-Allow-Credentials', /true/)
+        .expect('Access-Control-Allow-Origin', /http:\/\/baidu.com/)
+        .expect(200)
+        .end(function (err) {
+          should.exist(err);
+          done();
+        });
+    });
+
+    it('should not be equal after 5 seconds', function (done) {
+      this.timeout(3000);
+      setTimeout(function () {
+        reqApp
+          .get('/cacheCors')
+          .expect(200)
+          .end(function (err, result) {
+            should.not.exist(err);
+            result.body.should.not.be.eql(tmp);
+            done();
+          });
+      }, 2000);
     });
   });
 });
